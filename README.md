@@ -1,6 +1,6 @@
-# Template bottom tabs with auth flow (Typescript)
+# TMDB MOVIE APP
 
-Typescript Template starter with React Navigation Bottom Tabs and Supabase auth using React Context
+Typescript Template starter with React Navigation Bottom Tabs and Supabase auth using React Context used to make the TMDB movie app
 
 # Preview
 
