@@ -16,7 +16,6 @@ import { MovieDbResponse } from "./Home";
 import MovieImageCardWithDetails from "./MovieImageCardWithDetails";
 export default function () {
   const authCtx = useContext(AuthContext);
-  // console.log(authCtx.session?.user?.id);
   const userEmail = authCtx.session?.user?.email;
   const [nowPlayingMovie, setNowPlayingMovie] = useState<
     MovieDbResponse[] | null
@@ -56,6 +55,7 @@ export default function () {
             let newData = data.map((item) => {
               return { movie_id: item.id, movies: item };
             });
+            newData.reverse() 
             setNowPlayingMovie(newData);
           }
         }

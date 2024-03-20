@@ -1,5 +1,10 @@
-import { useNavigation } from "@react-navigation/native";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useReducer,
+  useState,
+} from "react";
 import {
   Alert,
   FlatList,
@@ -9,10 +14,10 @@ import {
 } from "react-native";
 
 import "react-native-get-random-values";
-import { v4 as uuidv4 } from "uuid";
 import { Layout, Text } from "react-native-rapi-ui";
-import { AuthContext } from "../provider/AuthProvider";
+import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../initSupabase";
+import { AuthContext } from "../provider/AuthProvider";
 import { Database } from "../types/navigation";
 import MovieImageCard from "./MovieImageCard";
 import MovieImageCardWithDetails from "./MovieImageCardWithDetails";
@@ -20,42 +25,159 @@ export interface MovieDbResponse {
   movie_id: number;
   movies: Database["public"]["Tables"]["movies"]["Row"] | null;
 }
+export type actionForReducer = {
+  type:
+    | "SET_POPULAR_MOVIES"
+    | "UPDATE_POPULAR_MOVIES"
+    | "SET_NOW_PLAYING_MOVIE"
+    | "UPDATE_NOW_PLAYING_MOVIE"
+    | "SET_TOP_RATED_MOVIE"
+    | "UPDATE_TOP_RATED_MOVIE"
+    | "SET_TOP_RATED_MOVIE"
+    | "UPDATE_TOP_RATED_MOVIE";
+  payload: MovieDbResponse[];
+};
+export type stateForMovie = {
+  popularMovies: MovieDbResponse[];
+  topRatedMovies: MovieDbResponse[];
+  nowPlayingMovie: MovieDbResponse[];
+};
+export function reducer(state: stateForMovie, action: actionForReducer) {
+  switch (action.type) {
+    case "SET_POPULAR_MOVIES":
+      return {
+        ...state,
+        popularMovies: action.payload,
+      };
+    case "UPDATE_POPULAR_MOVIES":
+      return {
+        ...state,
+        popularMovies: [...state.popularMovies, ...action.payload],
+      };
+    case "SET_TOP_RATED_MOVIE":
+      return {
+        ...state,
+        topRatedMovies: action.payload,
+      };
+    case "UPDATE_TOP_RATED_MOVIE":
+      return {
+        ...state,
+        topRatedMovies: [...state.topRatedMovies, ...action.payload],
+      };
+    case "SET_NOW_PLAYING_MOVIE":
+      return {
+        ...state,
+        nowPlayingMovie: action.payload,
+      };
+    case "UPDATE_NOW_PLAYING_MOVIE":
+      return {
+        ...state,
+        nowPlayingMovie: [...state.nowPlayingMovie, ...action.payload],
+      };
+  }
+}
+export function initialState(): stateForMovie {
+  return {
+    popularMovies: [],
+    topRatedMovies: [],
+    nowPlayingMovie: [],
+  };
+}
+export function getActionType(
+  tableName: string,
+  setOrUpdate: "set" | "update"
+): actionForReducer["type"] {
+  if (setOrUpdate === "update") {
+    switch (tableName) {
+      case "popular_duplicate":
+        return "UPDATE_POPULAR_MOVIES";
+      case "top_rated":
+        return "UPDATE_TOP_RATED_MOVIE";
+      case "now_playing":
+        return "UPDATE_NOW_PLAYING_MOVIE";
+      default:
+        throw new Error(`Invalid table name: ${tableName}`);
+    }
+  } else {
+    switch (tableName) {
+      case "popular_duplicate":
+        return "SET_POPULAR_MOVIES";
+      case "top_rated":
+        return "SET_TOP_RATED_MOVIE";
+      case "now_playing":
+        return "SET_NOW_PLAYING_MOVIE";
+      default:
+        throw new Error(`Invalid table name: ${tableName}`);
+    }
+  }
+}
 export default function () {
-  const navigation = useNavigation();
   const authCtx = useContext(AuthContext);
-  // console.log(authCtx.session?.user?.id);
+  console.log(authCtx.session?.user?.email);
   const userEmail = authCtx.session?.user?.email;
-  const [popularMovies, setPopularMovies] = useState<MovieDbResponse[] | null>(
-    null
-  );
-  const [topRatedMovies, setTopRatedMovies] = useState<
-    MovieDbResponse[] | null
-  >(null);
-  const [nowPlayingMovie, setNowPlayingMovie] = useState<
-    MovieDbResponse[] | null
-  >(null);
+
+  const [movieState, dispatch] = useReducer(reducer, {}, initialState);
+
   const [page, setPage] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const fetchMovies = useCallback(
-    async (
-      tableName: string,
-      setMovies: React.Dispatch<React.SetStateAction<MovieDbResponse[] | null>>,
-      movies: MovieDbResponse[] | null,
-      columns: string[]
-    ) => {
+    async (tableName: string, columns: string[]) => {
+      console.log(tableName, "table name function called");
       try {
         const { data, error }: { data: MovieDbResponse[] | null; error: any } =
           await supabase
             .from(tableName)
             .select(`movie_id,movies (${columns.join(",")})`)
             .range(page * 10, page * 10 + 9);
-        if (error) {
+        if (error !== null) {
           throw new Error(error);
         }
         if (data !== null) {
-          if (movies !== null)
-            setMovies((prevMovies) => [...prevMovies!!, ...data!!]);
-          else setMovies(data);
+          switch (tableName) {
+            case "popular_duplicate":
+              if (movieState.popularMovies.length === 0) {
+                dispatch({
+                  type: getActionType(tableName, "set"),
+                  payload: data,
+                });
+              } else {
+                dispatch({
+                  type: getActionType(tableName, "update"),
+                  payload: data,
+                });
+              }
+              break;
+            case "top_rated":
+              if (movieState.topRatedMovies.length === 0) {
+                dispatch({
+                  type: getActionType(tableName, "set"),
+                  payload: data,
+                });
+              } else {
+                dispatch({
+                  type: getActionType(tableName, "update"),
+                  payload: data,
+                });
+              }
+              break;
+            case "now_playing":
+              if (movieState.nowPlayingMovie.length === 0) {
+                dispatch({
+                  type: getActionType(tableName, "set"),
+                  payload: data,
+                });
+              } else {
+                dispatch({
+                  type: getActionType(tableName, "update"),
+                  payload: data,
+                });
+              }
+              break;
+            default:
+              throw new Error(
+                `Invalid table name in dispath call: ${tableName}`
+              );
+          }
           setPage((prevPage) => prevPage + 1);
         }
       } catch (err) {
@@ -67,59 +189,48 @@ export default function () {
   );
 
   useEffect(() => {
+    async function fetchAllMovies() {
+      await Promise.all([
+        fetchMovies("popular_duplicate", ["title", "poster_path"]),
+        fetchMovies("top_rated", ["title", "poster_path"]),
+        fetchMovies("now_playing", [
+          "title",
+          "poster_path",
+          "backdrop_path",
+          "overview",
+        ]),
+      ]);
+    }
     if (userEmail !== undefined) {
-      fetchMovies("popular", setPopularMovies, popularMovies, [
-        "title",
-        "poster_path",
-      ]);
-      fetchMovies("top_rated", setTopRatedMovies, topRatedMovies, [
-        "title",
-        "poster_path",
-      ]);
-      fetchMovies("now_playing", setNowPlayingMovie, nowPlayingMovie, [
+      fetchAllMovies();
+    }
+  }, []);
+  function callFetchMoviesPopular() {
+    fetchMovies("popular_duplicate", ["title", "poster_path"]);
+  }
+  function callFetchMoviesTopRated() {
+    fetchMovies("top_rated", ["title", "poster_path"]);
+  }
+  function callFetchMoviesNowPlaying() {
+    fetchMovies("now_playing", [
+      "title",
+      "poster_path",
+      "backdrop_path",
+      "overview",
+    ]);
+  }
+  const onRefresh = useCallback(async () => {
+    console.log("this function called");
+    setRefreshing(true);
+    await Promise.all([
+      fetchMovies("popular_duplicate", ["title", "poster_path"]),
+      fetchMovies("top_rated", ["title", "poster_path"]),
+      fetchMovies("now_playing", [
         "title",
         "poster_path",
         "backdrop_path",
         "overview",
-      ]);
-    }
-  }, []);
-  function callFetchMoviesPopular() {
-    fetchMovies("popular", setPopularMovies, popularMovies, [
-      "title",
-      "poster_path",
-    ]);
-  }
-  function callFetchMoviesTopRated() {
-    fetchMovies("top_rated", setTopRatedMovies, topRatedMovies, [
-      "title",
-      "poster_path",
-    ]);
-  }
-  function callFetchMoviesNowPlaying() {
-    fetchMovies("now_playing", setNowPlayingMovie, nowPlayingMovie, [
-      "title",
-      "poster_path",
-      "backdrop_path",
-      "overview",
-    ]);
-  }
-  const onRefresh = useCallback(() => {
-    console.log("this function called");
-    setRefreshing(true);
-    fetchMovies("popular", setPopularMovies, popularMovies, [
-      "title",
-      "poster_path",
-    ]);
-    fetchMovies("top_rated", setTopRatedMovies, topRatedMovies, [
-      "title",
-      "poster_path",
-    ]);
-    fetchMovies("now_playing", setNowPlayingMovie, nowPlayingMovie, [
-      "title",
-      "poster_path",
-      "backdrop_path",
-      "overview",
+      ]),
     ]);
     setRefreshing(false);
   }, []);
@@ -181,9 +292,9 @@ export default function () {
                 justifyContent: "flex-start",
               }}
             >
-              {popularMovies !== null ? (
+              {movieState.popularMovies.length > 0 ? (
                 <FlatList
-                  data={popularMovies}
+                  data={movieState.popularMovies}
                   style={{ margin: 10 }}
                   horizontal={true}
                   ItemSeparatorComponent={() => (
@@ -223,9 +334,9 @@ export default function () {
                 justifyContent: "flex-start",
               }}
             >
-              {topRatedMovies !== null ? (
+              {movieState.topRatedMovies.length > 0 ? (
                 <FlatList
-                  data={topRatedMovies}
+                  data={movieState.topRatedMovies}
                   style={{ margin: 10 }}
                   horizontal={true}
                   ItemSeparatorComponent={() => (
@@ -257,9 +368,9 @@ export default function () {
               </Text>
             </View>
             <View>
-              {nowPlayingMovie !== null ? (
+              {movieState.nowPlayingMovie.length > 0 ? (
                 <FlatList
-                  data={nowPlayingMovie}
+                  data={movieState.nowPlayingMovie}
                   style={{ margin: 10 }}
                   horizontal={true}
                   ItemSeparatorComponent={() => (
@@ -272,7 +383,7 @@ export default function () {
                   removeClippedSubviews={true}
                 />
               ) : (
-                <Text>Loading !!</Text>
+                <Text>Loading</Text>
               )}
             </View>
           </View>

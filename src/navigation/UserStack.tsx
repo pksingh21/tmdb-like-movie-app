@@ -1,32 +1,32 @@
 import { Ionicons } from "@expo/vector-icons";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { useAtom } from "jotai";
 import * as React from "react";
 import {
-  Button,
   // Button,
   ScrollViewProps,
-  View,
 } from "react-native";
 import { TopNav, themeColor, useTheme } from "react-native-rapi-ui";
 import { SafeAreaView } from "react-native-safe-area-context";
-import UserScreen from "../screens/UserScreen";
-import MovieNavigationStack, {
-  MovieNavigationStackParamList,
-} from "./MovieNavigationStack";
 import {
   fromWhichScreenMovieDetails,
   isAllMoviePageOpen,
 } from "../states/atom";
-import { useAtom } from "jotai";
-import LikedMoviePages from "../screens/LikedMoviePages";
 import LikedMovieNavigationStack, {
   LikedMovieNavigationStackParamList,
 } from "./LikedMovieNavigationStack";
+import MovieNavigationStack, {
+  MovieNavigationStackParamList,
+} from "./MovieNavigationStack";
+import SearchMovieNavigationStack, {
+  SearchMovieNavigationStackParamList,
+} from "./SearchMovieNavigationStack";
 type createDrawerNavigatorStack = {
   Home: undefined;
   FavouriteMovies: undefined;
   UserScreen: undefined;
+  SearchMovies: undefined;
 };
 const Drawer = createDrawerNavigator<createDrawerNavigatorStack>();
 type Props = ScrollViewProps & {
@@ -41,6 +41,8 @@ export default function UserStack() {
     useNavigation<NavigationProp<MovieNavigationStackParamList>>();
   const likedMovieStackNavigation =
     useNavigation<NavigationProp<LikedMovieNavigationStackParamList>>();
+  const searchMovieNavigation =
+    useNavigation<NavigationProp<SearchMovieNavigationStackParamList>>();
   return (
     <Drawer.Navigator
       initialRouteName="Home"
@@ -88,17 +90,19 @@ export default function UserStack() {
                   }
                 }}
                 leftAction={() => {
-                  console.log(whichScreen);
                   if (isMovieOpen) {
                     if (whichScreen === "home") {
                       setIsMovieOpen(false);
                       setWhichScreen("home");
                       stackNavigation.goBack();
                     } else if (whichScreen === "likedMovies") {
-                      console.log(" alright in liked movies");
                       setIsMovieOpen(false);
                       setWhichScreen("home");
                       likedMovieStackNavigation.navigate("LikedMoviePages");
+                    } else if (whichScreen === "searchMovies") {
+                      setIsMovieOpen(false);
+                      setWhichScreen("searchMovies");
+                      searchMovieNavigation.navigate("SearchMoviePages");
                     }
                   } else {
                     navigation.openDrawer();
@@ -117,6 +121,13 @@ export default function UserStack() {
           title: "Favourite Movies",
         }}
         component={LikedMovieNavigationStack}
+      />
+      <Drawer.Screen
+        name="SearchMovies"
+        options={{
+          title: "Search Movies",
+        }}
+        component={SearchMovieNavigationStack}
       />
     </Drawer.Navigator>
   );

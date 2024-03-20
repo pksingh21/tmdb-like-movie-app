@@ -10,15 +10,18 @@ import {
 } from "../states/atom";
 import { useAtom } from "jotai";
 import { LikedMovieNavigationStackParamList } from "../navigation/LikedMovieNavigationStack";
+import { SearchMovieNavigationStackParamList } from "../navigation/SearchMovieNavigationStack";
 interface MovieImageCardProps {
   movieInformation: MovieDbResponse;
-  from: "home" | "liked";
+  from: "home" | "liked" | "search";
 }
 function MovieImageCard(props: MovieImageCardProps) {
   const navigation =
     useNavigation<NavigationProp<MovieNavigationStackParamList>>();
   const LikedMovieNavigation =
     useNavigation<NavigationProp<LikedMovieNavigationStackParamList>>();
+  const SearchMovieNavigation =
+    useNavigation<NavigationProp<SearchMovieNavigationStackParamList>>();
   const [isAllMovieOpen, setIsAllMovieOpen] = useAtom(isAllMoviePageOpen);
   const [whichScreen, setWhichScreen] = useAtom(fromWhichScreenMovieDetails);
   return (
@@ -30,12 +33,21 @@ function MovieImageCard(props: MovieImageCardProps) {
           navigation.navigate("MovieAllDetails", {
             movieId: props.movieInformation.movie_id,
           });
-        } else {
+        } else if (props.from === "liked") {
           setIsAllMovieOpen(true);
           setWhichScreen("likedMovies");
           LikedMovieNavigation.navigate("MovieAllDetailsFromLikedMoviePages", {
             movieId: props.movieInformation.movie_id,
           });
+        } else if (props.from === "search") {
+          setIsAllMovieOpen(true);
+          setWhichScreen("searchMovies");
+          SearchMovieNavigation.navigate(
+            "MovieAllDetailsFromSearchMoviePages",
+            {
+              movieId: props.movieInformation.movie_id,
+            }
+          );
         }
       }}
     >

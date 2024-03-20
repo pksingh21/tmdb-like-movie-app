@@ -3,7 +3,8 @@ import React, { useEffect } from "react";
 import { ThemeProvider, useTheme } from "react-native-rapi-ui";
 import Navigation from "./src/navigation";
 import { AuthProvider } from "./src/provider/AuthProvider";
-
+import { Provider } from "react-redux";
+import { store } from "./src/states/store";
 export default function App() {
   const images = [
     require("./assets/images/login.png"),
@@ -13,9 +14,11 @@ export default function App() {
 
   return (
     <ThemeProvider images={images}>
-      <AuthProvider>
-        <Navigation />
-      </AuthProvider>
+      <Provider store={store}>
+        <AuthProvider>
+          <Navigation />
+        </AuthProvider>
+      </Provider>
     </ThemeProvider>
   );
 }

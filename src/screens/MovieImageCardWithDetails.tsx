@@ -10,9 +10,10 @@ import {
 } from "../states/atom";
 import { MovieDbResponse } from "./Home";
 import { LikedMovieNavigationStackParamList } from "../navigation/LikedMovieNavigationStack";
+import { SearchMovieNavigationStackParamList } from "../navigation/SearchMovieNavigationStack";
 interface MovieImageCardProps {
-  movieInformation: MovieDbResponse;
-  from: "liked" | "home";
+  movieInformation: MovieDbResponse ;
+  from: "liked" | "home" | "search";
 }
 function MovieImageCardWithDetails(props: MovieImageCardProps) {
   const [isAllMovieOpen, setIsAllMovieOpen] = useAtom(isAllMoviePageOpen);
@@ -23,6 +24,8 @@ function MovieImageCardWithDetails(props: MovieImageCardProps) {
     useNavigation<NavigationProp<MovieNavigationStackParamList>>();
   const anotherNavigation =
     useNavigation<NavigationProp<LikedMovieNavigationStackParamList>>();
+  const searchMovieNavigation =
+    useNavigation<NavigationProp<SearchMovieNavigationStackParamList>>();
   return (
     <TouchableOpacity
       onPress={() => {
@@ -37,6 +40,14 @@ function MovieImageCardWithDetails(props: MovieImageCardProps) {
           anotherNavigation.navigate("MovieAllDetailsFromLikedMoviePages", {
             movieId: props.movieInformation.movie_id,
           });
+        } else if (props.from === "search") {
+          setWhichScreen("searchMovies");
+          searchMovieNavigation.navigate(
+            "MovieAllDetailsFromSearchMoviePages",
+            {
+              movieId: props.movieInformation.movie_id,
+            }
+          );
         }
       }}
     >
@@ -76,14 +87,11 @@ function MovieImageCardWithDetails(props: MovieImageCardProps) {
               }}
             >
               <View style={{ position: "absolute", left: 120, width: "55%" }}>
-                <Text
-                  style={{ color: "white", fontSize: 16, fontWeight: "900" }}
-                >
+                <Text style={{ color: "white", fontSize: 16, fontWeight: "900" }}>
                   {props.movieInformation.movies?.title}
                 </Text>
                 <Text style={{ color: "white", fontSize: 14 }}>
-                  {props.movieInformation.movies?.overview?.substring(0, 150) +
-                    "..."}
+                  {props.movieInformation.movies?.["overview"]?.substring(0, 150) + "..."}
                 </Text>
               </View>
             </View>

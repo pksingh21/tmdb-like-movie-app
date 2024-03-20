@@ -1,23 +1,22 @@
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
-import { StatusBar } from "expo-status-bar";
 import {
+  Image,
+  KeyboardAvoidingView,
   ScrollView,
   TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Image,
 } from "react-native";
 import { supabase } from "../../initSupabase";
 import { AuthStackParamList } from "../../types/navigation";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import {
+  Button,
   Layout,
   Text,
   TextInput,
-  Button,
-  useTheme,
   themeColor,
+  useTheme,
 } from "react-native-rapi-ui";
 
 export default function ({
@@ -39,6 +38,7 @@ export default function ({
       alert("Check your email for the login link!");
     }
     if (error) {
+      console.log(error)
       setLoading(false);
       alert(error.message);
     }

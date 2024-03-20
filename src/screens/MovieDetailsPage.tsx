@@ -1,7 +1,6 @@
 import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useEffect, useState } from "react";
-import "react-native-get-random-values";
-import { v4 as uuidv4 } from "uuid";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,19 +9,23 @@ import {
   Linking,
   Pressable,
   ScrollView,
+  Text,
   View,
 } from "react-native";
-import { Button, Section, themeColor, useTheme } from "react-native-rapi-ui";
-import { Text } from "react-native";
-import { Text as RapiText } from "react-native-rapi-ui";
+import "react-native-get-random-values";
+import { Text as RapiText, Section, themeColor, useTheme } from "react-native-rapi-ui";
+import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../initSupabase";
 import { MovieNavigationStackParamList } from "../navigation/MovieNavigationStack";
+import { RootState } from "../states/store";
 import { Database } from "../types/navigation";
-import { LinearGradient } from "expo-linear-gradient";
-import MovieCastCard from "./MovieCastCard";
-import LikeButton from "./LikeButton";
 import CommentModal from "./CommentModal";
+import LikeButton from "./LikeButton";
+import MovieCastCard from "./MovieCastCard";
 function MovieAllDetails() {
+  const count = useSelector((state: RootState) => state.counter.counter);
+  const dispatch = useDispatch();
   const navigation =
     useNavigation<NavigationProp<MovieNavigationStackParamList>>();
   const movieId = navigation.getState().routes.at(-1)!!.params?.movieId;
